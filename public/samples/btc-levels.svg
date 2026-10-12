@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 280" role="img" aria-label="Fictional BTC price-level illustration">
+<rect width="600" height="280" fill="#eef4fa"/><g stroke="#c9d9e8"><path d="M40 70h520M40 120h520M40 170h520M40 220h520"/></g>
+<path d="M40 195l55-10 40-35 50 10 50-60 55 15 45-40 50 25 45-30 50 10 40-35 40 10" fill="none" stroke="#245ea8" stroke-width="4"/>
+<path d="M40 160h520" stroke="#687c8e" stroke-dasharray="6 6"/>
+<g font-family="sans-serif" fill="#17334a"><text x="40" y="38" font-size="18">BTC · fictional example</text><text x="40" y="257" font-size="14">Illustrative levels only. Not market data.</text></g></svg>
