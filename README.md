@@ -71,4 +71,4 @@ The sample traders, posts, and images are original fictional material. The SVGs 
 
 The public Centaur feed contract remains authoritative. This repository validates a narrow subset of that response and discards unused fields. Review these schemas and examples when the API changes. Partners update copied applications themselves.
 
-This example is under implementation review. The public template and reviewed release links are not yet published.
+This starter is under implementation review and has no reviewed release yet.
