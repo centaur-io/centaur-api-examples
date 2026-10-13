@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   feedDataSchema,
   safeUrl,
@@ -93,9 +93,7 @@ export function Feed({ initialMode }: { initialMode: DataMode | 'unavailable' })
   const [asset, setAsset] = useState('')
   const [revision, setRevision] = useState(0)
   const [state, setState] = useState<State>({ status: 'loading' })
-  const generation = useRef(0)
   useEffect(() => {
-    const current = ++generation.current
     const controller = new AbortController()
     async function load() {
       try {
@@ -104,7 +102,7 @@ export function Feed({ initialMode }: { initialMode: DataMode | 'unavailable' })
           { signal: controller.signal, cache: 'no-store' },
         )
         const body = await response.json()
-        if (controller.signal.aborted || generation.current !== current) return
+        if (controller.signal.aborted) return
         if (!response.ok) {
           setState({
             status: 'error',
@@ -125,7 +123,7 @@ export function Feed({ initialMode }: { initialMode: DataMode | 'unavailable' })
         setMode(body.mode)
         setState({ status: 'ready', data: data.data })
       } catch {
-        if (!controller.signal.aborted && generation.current === current)
+        if (!controller.signal.aborted)
           setState({
             status: 'error',
             error: { message: 'The starter could not load the feed. Try Refresh again.' },
@@ -133,10 +131,7 @@ export function Feed({ initialMode }: { initialMode: DataMode | 'unavailable' })
       }
     }
     void load()
-    return () => {
-      controller.abort()
-      generation.current += 1
-    }
+    return () => controller.abort()
   }, [asset, revision])
 
   return (
