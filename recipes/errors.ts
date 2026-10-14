@@ -2,7 +2,7 @@ import { centaur } from './client.ts'
 import { CentaurApiError } from '../lib/centaur.ts'
 
 try {
-  console.log(await centaur.feed({ limit: 5 }))
+  console.log(JSON.stringify(await centaur.feed({ limit: 5 }), null, 2))
 } catch (error) {
   if (error instanceof CentaurApiError) {
     console.error({
