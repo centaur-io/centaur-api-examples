@@ -1,4 +1,4 @@
-import type { FeedData, FeedItem } from '../lib/centaur/contracts'
+import type { FeedData, FeedItem } from '../lib/centaur'
 
 // Original fictional material. These IDs never become live API filters.
 const btc = { id: 900001, name: 'Bitcoin', symbol: 'BTC' }
@@ -32,9 +32,9 @@ const items: FeedItem[] = [
     ],
   },
   {
-    id: 'sample:river:002',
+    id: 'sample:maya:002',
     writtenAt: '2026-01-15T11:30:00.000Z',
-    trader: { id: 900102, name: 'Sample trader River' },
+    trader: { id: 900102, name: 'Sample trader Maya' },
     source: {
       platform: 'TELEGRAM',
       url: null,
@@ -82,6 +82,11 @@ export function sampleFeed(assetId?: number): FeedData {
       assetId === undefined
         ? items
         : items.filter((item) => item.events.some((event) => event.assetId === assetId)),
-    meta: { serverTime: '2026-01-15T12:05:00.000Z', dataComputedAt: '2026-01-15T12:05:00.000Z' },
+    meta: {
+      hasMore: false,
+      nextCursor: null,
+      serverTime: '2026-01-15T12:05:00.000Z',
+      dataComputedAt: '2026-01-15T12:05:00.000Z',
+    },
   })
 }

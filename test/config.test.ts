@@ -12,7 +12,7 @@ it('defaults to sample even when a key is present', () => {
 it('requires explicit live configuration and rejects unknown modes', () => {
   vi.stubEnv('CENTAUR_DATA_MODE', 'live')
   vi.stubEnv('CENTAUR_API_KEY', '')
-  expect(readConfig).toThrow('Set a server-side Centaur API key')
+  expect(readConfig).toThrow('Set CENTAUR_API_KEY in .env.local')
   vi.stubEnv('CENTAUR_API_KEY', 'server-secret')
   expect(readConfig()).toEqual({ mode: 'live', apiKey: 'server-secret' })
   vi.stubEnv('CENTAUR_DATA_MODE', 'typo')

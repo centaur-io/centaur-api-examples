@@ -1,6 +1,6 @@
 import 'server-only'
-import { CentaurError } from '../centaur/errors'
-import type { DataMode } from '../centaur/contracts'
+import { CentaurError } from './errors'
+import type { DataMode } from '../presentation'
 
 export function readMode() {
   const mode = process.env.CENTAUR_DATA_MODE ?? 'sample'
@@ -16,7 +16,7 @@ export function readConfig(): { mode: DataMode; apiKey?: string } {
     throw new CentaurError(
       500,
       'CONFIGURATION_ERROR',
-      'Set a server-side Centaur API key to use live mode.',
+      'Set CENTAUR_API_KEY in .env.local to use live mode.',
     )
   return { mode, apiKey }
 }

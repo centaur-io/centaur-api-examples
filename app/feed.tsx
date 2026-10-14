@@ -1,13 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import {
-  feedDataSchema,
-  safeUrl,
-  type DataMode,
-  type FeedData,
-  type FeedItem,
-} from '../lib/centaur/contracts'
+import type { FeedData, FeedItem } from '../lib/centaur'
+import { safeUrl, type DataMode } from '../lib/presentation'
 import { selections } from '../lib/selections'
 
 type Failure = { message: string; requestId?: string; retryAfter?: string }
@@ -117,11 +112,10 @@ export function Feed({ initialMode }: { initialMode: DataMode | 'unavailable' })
           })
           return
         }
-        const data = feedDataSchema.safeParse(body.data)
-        if (!data.success || !['sample', 'live'].includes(body.mode))
+        if (!Array.isArray(body.data?.results) || !['sample', 'live'].includes(body.mode))
           throw new Error('Invalid feed')
         setMode(body.mode)
-        setState({ status: 'ready', data: data.data })
+        setState({ status: 'ready', data: body.data as FeedData })
       } catch {
         if (!controller.signal.aborted)
           setState({

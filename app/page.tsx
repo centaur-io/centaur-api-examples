@@ -1,7 +1,7 @@
 import { connection } from 'next/server'
 import { readMode } from '../lib/server/config'
 import { Feed } from './feed'
-import type { DataMode } from '../lib/centaur/contracts'
+import type { DataMode } from '../lib/presentation'
 
 export default async function Page() {
   await connection()

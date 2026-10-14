@@ -1,8 +1,8 @@
-import { readFeed } from '../centaur/feed'
-import { CentaurError, publicError } from '../centaur/errors'
+import { createCentaurClient } from '../centaur'
+import { CentaurError, publicError } from './errors'
 import { selections } from '../selections'
 import { sampleFeed } from '../../fixtures/feed'
-import type { DataMode } from '../centaur/contracts'
+import type { DataMode } from '../presentation'
 
 // Web-standard adapter. Inject configuration here so this boundary is testable without Next.
 export async function handleFeed(
@@ -27,15 +27,19 @@ export async function handleFeed(
         'Choose a configured asset or the general feed.',
       )
     const config = configure()
+    if (config.mode === 'live' && !config.apiKey)
+      throw new CentaurError(
+        500,
+        'CONFIGURATION_ERROR',
+        'Set CENTAUR_API_KEY in .env.local to use live mode.',
+      )
     const data =
       config.mode === 'sample'
         ? sampleFeed(selection?.sampleId)
-        : await readFeed({
-            apiKey: config.apiKey ?? '',
-            assetId: selection?.liveId,
-            signal: request.signal,
-            fetcher,
-          })
+        : await createCentaurClient({ apiKey: config.apiKey!, fetcher }).feed(
+            { assetIds: selection ? [selection.liveId] : undefined, limit: 20 },
+            request.signal,
+          )
     return Response.json({ mode: config.mode, data }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
     const safe = publicError(error)

@@ -1,15 +1,6 @@
-export class CentaurError extends Error {
-  constructor(
-    readonly status: number,
-    readonly code: string,
-    message: string,
-    readonly requestId?: string,
-    readonly retryAfter?: string,
-  ) {
-    super(message)
-    this.name = 'CentaurError'
-  }
-}
+import { CentaurApiError } from '../centaur'
+
+export class CentaurError extends CentaurApiError {}
 
 export function retryAfter(value: string | null): string | undefined {
   if (!value || value.length > 64) return undefined
@@ -23,9 +14,9 @@ export function statusMessage(status: number) {
     case 401:
       return 'The integration owner must check the Centaur API key.'
     case 403:
-      return 'The integration owner must check API access and the feed.read permission.'
+      return 'The integration owner must check account access and the required API permissions.'
     case 422:
-      return 'Centaur rejected the selection. Check the configured asset identifiers.'
+      return 'Centaur rejected the selection. Check the requested identifiers.'
     case 429:
       return 'The API allowance is exhausted. Wait before trying Refresh again.'
     case 503:
@@ -39,7 +30,15 @@ export function publicError(error: unknown) {
   const safe =
     error instanceof CentaurError
       ? error
-      : new CentaurError(500, 'INTERNAL_ERROR', 'The starter could not complete this request.')
+      : error instanceof CentaurApiError
+        ? new CentaurError(
+            error.status >= 400 && error.status <= 599 ? error.status : 502,
+            'CENTAUR_API_ERROR',
+            statusMessage(error.status),
+            error.requestId,
+            retryAfter(error.retryAfter ?? null),
+          )
+        : new CentaurError(500, 'INTERNAL_ERROR', 'The starter could not complete this request.')
   return {
     status: safe.status,
     body: {
