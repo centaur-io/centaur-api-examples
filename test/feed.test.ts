@@ -21,6 +21,7 @@ it('serializes filters and preserves the API pagination fields', async () => {
     await client.feed({
       assetIds: [1, 10],
       traderIds: [42],
+      assetClass: ['crypto'],
       cursor: 'opaque&cursor',
     }),
   ).toEqual(data)
@@ -28,6 +29,7 @@ it('serializes filters and preserves the API pagination fields', async () => {
   const url = new URL(String(input))
   expect(url.searchParams.get('assetIds')).toBe('1,10')
   expect(url.searchParams.get('cursor')).toBe('opaque&cursor')
+  expect(url.searchParams.get('assetClass')).toBe('crypto')
   expect(options).toMatchObject({
     headers: { 'x-api-key': key },
     redirect: 'error',
@@ -35,7 +37,7 @@ it('serializes filters and preserves the API pagination fields', async () => {
   })
 })
 
-it.each([{ assetIds: [] }, { traderIds: [] }])(
+it.each([{ assetIds: [] }, { traderIds: [] }, { assetClass: [] }])(
   'does not broaden explicit empty filters %j',
   async (query) => {
     const fetcher = vi.fn<typeof fetch>()
