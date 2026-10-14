@@ -34,7 +34,7 @@ The teaching client trusts the documented response types. It does not include ru
 
 [Five API tasks](recipes/README.md) run directly with Node 24, without installing Next.js or any package. cURL examples live in the [public API quickstart](https://docs.centaur.io/integrations/api-quickstart).
 
-The positioning endpoint is release-gated. Keep its example pending until it is available in the target environment. Existing feed and directory recipes can release independently.
+The positioning endpoint and `assetClass` feed filter are release-gated. Keep those examples pending until they are available in the target environment. Existing feed and directory recipes can release independently.
 
 ## Checks
 
