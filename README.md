@@ -30,6 +30,12 @@ Keep the key on the server, outside `NEXT_PUBLIC_` variables. Add your own acces
 
 The teaching client trusts the documented response types. It does not include runtime schema validation or retry logic. It preserves pagination metadata; your application decides when to request another page or retry.
 
+## Focused recipes
+
+[Five API tasks](recipes/README.md) run directly with Node 24, without installing Next.js or any package. cURL examples live in the [public API quickstart](https://docs.centaur.io/integrations/api-quickstart).
+
+The positioning endpoint is release-gated. Keep its example pending until it is available in the target environment. Existing feed and directory recipes can release independently.
+
 ## Checks
 
 ```sh

@@ -14,7 +14,8 @@
     "check-types": "next typegen && tsc --noEmit",
     "lint": "eslint . && prettier --check .",
     "test": "vitest run",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "recipe": "node recipes/feed.ts"
   },
   "dependencies": {
     "next": "16.4.0",
