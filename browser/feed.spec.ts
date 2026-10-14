@@ -54,7 +54,7 @@ test('rapid selection changes clear old content and ignore a late response', asy
   await expect(page.locator('article')).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeDisabled()
   await page.getByRole('combobox', { name: 'Asset', exact: true }).selectOption('eth')
-  await expect(page.getByRole('heading', { name: 'Sample trader River' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Sample trader Maya' })).toBeVisible()
   release?.()
   await expect(page.locator('article')).toHaveCount(1)
   await expect(page.getByRole('heading', { name: 'Sample trader Alex' })).toHaveCount(0)
@@ -101,7 +101,7 @@ test('live mode without a key stays live and shows configuration guidance', asyn
   await page.goto('http://localhost:3043')
   await expect(page.getByText('Live API mode', { exact: true })).toBeVisible()
   await expect(page.getByRole('alert', { name: 'Feed unavailable', exact: true })).toContainText(
-    'server-side Centaur API key',
+    'CENTAUR_API_KEY in .env.local',
   )
   await expect(page.locator('article')).toHaveCount(0)
   await expect(page.getByText('Sample data', { exact: true })).toHaveCount(0)
