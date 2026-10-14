@@ -42,6 +42,7 @@ export async function handleFeed(
           )
     return Response.json({ mode: config.mode, data }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
+    console.error(error)
     const safe = publicError(error)
     return Response.json(safe.body, { status: safe.status, headers: safe.headers })
   }
