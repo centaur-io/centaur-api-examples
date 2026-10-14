@@ -2,15 +2,15 @@
 
 Use Node.js 24. Clone the repository, set `CENTAUR_API_KEY` in your terminal, and run a script. No package installation or Next.js server is needed. Keep the key out of browser code.
 
-| Task                                | Command                                   |
-| ----------------------------------- | ----------------------------------------- |
-| Find asset IDs                      | `node recipes/find-ids.ts assets bitcoin` |
-| Find trader IDs                     | `node recipes/find-ids.ts traders "NAME"` |
-| General feed                        | `node recipes/feed.ts`                    |
-| Filter by asset IDs                 | `node recipes/feed.ts 1,10`               |
-| Next page with the original filters | `node recipes/next-page.ts`               |
-| HTTP errors and retry guidance      | `node recipes/errors.ts`                  |
-| Asset positioning, after release    | `node recipes/pending/positioning.ts 1`   |
+| Task                                | Command                                   | Required scope   |
+| ----------------------------------- | ----------------------------------------- | ---------------- |
+| Find asset IDs                      | `node recipes/find-ids.ts assets bitcoin` | `directory.read` |
+| Find trader IDs                     | `node recipes/find-ids.ts traders "NAME"` | `directory.read` |
+| General feed                        | `node recipes/feed.ts`                    | `feed.read`      |
+| Filter by asset IDs                 | `node recipes/feed.ts 1,10`               | `feed.read`      |
+| Next page with the original filters | `node recipes/next-page.ts`               | `feed.read`      |
+| HTTP errors and retry guidance      | `node recipes/errors.ts`                  | `feed.read`      |
+| Asset positioning, after release    | `node recipes/pending/positioning.ts 1`   | `stats.read`     |
 
 Choose IDs from the directory results. Discovery is a setup step, not a lookup before every feed request. The feed recipe shows where to add `traderIds`; omit unused filters. Do not send an empty list to mean "no matches".
 
