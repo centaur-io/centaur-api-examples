@@ -31,7 +31,7 @@ export type Asset = {
   name: string
   symbol: string
   slug: string | null
-  resolvedAssetClass: AssetClass | 'other' // Use this value with the feed's assetClass filter.
+  resolvedAssetClass: AssetClass | 'other' // Use with the feed's assetClass filter, except 'other'.
 }
 
 export type Trader = { id: number; name: string; slug: string | null }
