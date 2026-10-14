@@ -1,5 +1,5 @@
 // Centaur API client. Copy this file into any server-side TypeScript project.
-// Needs only standard fetch (Node 20+, Deno, Bun, Workers). Keep the API key on the server.
+// Uses standard fetch. Tested with Node.js 24. Keep the API key on the server.
 
 export type AssetClass = 'crypto' | 'stocks' | 'indices' | 'commodities' | 'fx'
 

@@ -11,7 +11,7 @@ npm ci
 npm run dev
 ```
 
-Open http://localhost:3000. Choose General feed, BTC or ETH and use **Refresh** to fetch again. Sample mode never calls Centaur.
+Open http://localhost:3000. Choose All assets, Bitcoin (BTC) or Ethereum (ETH) and use **Refresh** to fetch again. Sample mode never calls Centaur.
 
 To use live data, copy `.env.example` to `.env.local`, set `CENTAUR_DATA_MODE=live` and `CENTAUR_API_KEY`, then restart. Your key needs `feed.read`. Missing credentials and live errors stay visible; they never fall back to samples.
 

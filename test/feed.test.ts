@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createCentaurClient } from '../lib/centaur'
 import { publicError, retryAfter } from '../lib/server/errors'
 import { sampleFeed } from '../fixtures/feed'
@@ -7,6 +7,7 @@ import { safeUrl } from '../lib/presentation'
 
 const key = 'test-secret-do-not-expose'
 const success = () => Response.json({ success: true, requestId: 'request-123', data: sampleFeed() })
+beforeEach(() => vi.spyOn(console, 'error').mockImplementation(() => {}))
 afterEach(() => vi.restoreAllMocks())
 
 it('serializes filters and preserves the API pagination fields', async () => {
@@ -187,4 +188,34 @@ it('preserves a native body-stream timeout after response headers arrive', async
     ),
   )
   await expect(createCentaurClient({ apiKey: key, fetcher }).feed()).rejects.toBe(timeout)
+})
+
+it('logs upstream diagnostics only on the server when the starter request fails', async () => {
+  const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+    Response.json(
+      {
+        success: false,
+        error: { code: 'VALIDATION_ERROR', message: 'Unrecognized key: assetClass' },
+        requestId: 'upstream-123',
+      },
+      { status: 422 },
+    ),
+  )
+  const response = await handleFeed(
+    new Request('http://localhost/api/feed'),
+    () => ({ mode: 'live', apiKey: key }),
+    fetcher,
+  )
+  expect(console.error).toHaveBeenCalledWith(
+    expect.objectContaining({
+      status: 422,
+      code: 'VALIDATION_ERROR',
+      message: 'Unrecognized key: assetClass',
+      requestId: 'upstream-123',
+    }),
+  )
+  const body = await response.json()
+  expect(body.error.requestId).toBe('upstream-123')
+  expect(JSON.stringify(body)).not.toContain('Unrecognized key')
+  expect(JSON.stringify(body)).not.toContain(key)
 })
