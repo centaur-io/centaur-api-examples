@@ -137,6 +137,8 @@ function AssetSearch({
           defaultValue={search.query}
           placeholder="Search by name or symbol, such as bitcoin"
           maxLength={100}
+          pattern=".*\S.*"
+          title="Enter a name or symbol."
           required
           autoComplete="off"
         />
@@ -148,9 +150,11 @@ function AssetSearch({
           <FailureDetails error={search.error} />
         </div>
       )}
-      {search.results?.length === 0 && (
+      {search.results && (
         <p className="search-state" role="status">
-          No assets match “{search.query}”.
+          {search.results.length === 0
+            ? `No assets match “${search.query}”.`
+            : `${search.results.length} ${search.results.length === 1 ? 'asset matches' : 'assets match'} “${search.query}”. Choose one to filter the feed.`}
         </p>
       )}
       {!!search.results?.length && (
@@ -210,9 +214,11 @@ export function Feed({ initialMode }: { initialMode: DataMode | 'unavailable' })
     return () => controller.abort()
   }, [asset, revision])
 
+  // Choosing the current asset again reloads it, like Refresh.
   function select(next?: Asset) {
     setState({ status: 'loading' })
     setAsset(next)
+    setRevision((value) => value + 1)
   }
 
   return (
@@ -243,14 +249,7 @@ export function Feed({ initialMode }: { initialMode: DataMode | 'unavailable' })
             Show all assets
           </button>
         )}
-        <button
-          type="button"
-          disabled={state.status === 'loading'}
-          onClick={() => {
-            setState({ status: 'loading' })
-            setRevision((value) => value + 1)
-          }}
-        >
+        <button type="button" disabled={state.status === 'loading'} onClick={() => select(asset)}>
           Refresh
         </button>
       </div>
