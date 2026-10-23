@@ -1,7 +1,7 @@
 // The API serves `source.text` as stored: Telegram posts use a small HTML tag subset with escaped
 // characters, and X posts are plain text with `&amp; &lt; &gt;` escaped. Render the result as a
 // text node, never as HTML. Each pattern has a single unbounded quantifier that cannot overlap, so
-// both scans are linear. Same behaviour as the hosted Centaur widget.
+// both scans are linear. Same logic as the hosted Centaur widget uses for X text.
 const TAG = /<\/?[a-z][^<>]*>/gi
 const ENTITY = /&(?:#(\d{1,7})|#[xX]([\da-fA-F]{1,6})|(amp|lt|gt|quot|apos));/g
 const NAMED: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" }

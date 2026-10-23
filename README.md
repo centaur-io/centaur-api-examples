@@ -32,7 +32,7 @@ Keep the key on the server, outside `NEXT_PUBLIC_` variables. Add your own acces
 
 ### Source text
 
-The API serves `source.text` as stored. Telegram posts use a small HTML subset with escaped characters, such as `<b>ETH</b> &amp; BTC`, and X posts are plain text with `&amp;`, `&lt;` and `&gt;` escaped. [`lib/source-text.ts`](lib/source-text.ts) strips the tags and decodes the entities once, and the feed renders the result as text, never as HTML. It matches the hosted Centaur widget. `source.text` can be `null`; the feed then shows "Source text is unavailable."
+The API serves `source.text` as stored. Telegram posts use a small HTML subset with escaped characters, such as `<b>ETH</b> &amp; BTC`, and X posts are plain text with `&amp;`, `&lt;` and `&gt;` escaped. [`lib/source-text.ts`](lib/source-text.ts) strips the tags and decodes the entities once, and the feed renders the result as text, never as HTML. The hosted Centaur widget renders Telegram formatting; this starter shows plain text on purpose, so it never inserts API HTML into the page. `source.text` can be `null`; the feed then shows "Source text is unavailable."
 
 Events with `assumed: true` display like any other trade. `retrospective: true` means the post reports a trade that happened earlier.
 
