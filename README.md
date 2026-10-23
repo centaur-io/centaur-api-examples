@@ -17,6 +17,8 @@ To use live data, copy `.env.example` to `.env.local`, set `CENTAUR_DATA_MODE=li
 
 > **Shell variables win over `.env.local`.** Next.js reads `process.env` before any `.env` file, so a `CENTAUR_API_KEY` or `CENTAUR_DATA_MODE` already exported in your terminal silently replaces the value in `.env.local`. If the starter uses the wrong key or mode, run `unset CENTAUR_API_KEY CENTAUR_DATA_MODE` (or open a new terminal) and restart `npm run dev`.
 
+The first request after the API has been idle can take a few seconds while a server instance starts. Later requests usually return well under a second. `npm run dev` also compiles each route on its first request. The client's 10 s timeout covers a cold start, so there is no need to retry a slow first response.
+
 Keep the key on the server, outside `NEXT_PUBLIC_` variables. Add your own access and traffic controls before making this demonstration publicly available.
 
 ## Adapt it
