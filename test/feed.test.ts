@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createCentaurClient } from '../lib/centaur'
 import { publicError, retryAfter } from '../lib/server/errors'
 import { sampleFeed } from '../fixtures/feed'
-import { handleFeed } from '../lib/server/feed-handler'
+import { handleAssets, handleFeed } from '../lib/server/handlers'
 import { safeUrl } from '../lib/presentation'
 
 const key = 'test-secret-do-not-expose'
@@ -107,14 +107,19 @@ it('reports a non-JSON outage without replacing it with samples', async () => {
 
 describe('starter route boundary', () => {
   it.each([
-    'asset=',
-    'asset=unknown',
-    'asset=btc&asset=eth',
-    'asset=1',
+    'assetId=',
+    'assetId=0',
+    'assetId=-1',
+    'assetId=1.5',
+    'assetId=01',
+    'assetId=12345678901',
+    'assetId=btc',
+    'assetId=1&assetId=10',
+    'asset=btc',
     'url=https://untrusted.example',
     'key=visitor',
     'cursor=any',
-  ])('rejects %s before upstream configuration or calls', async (query) => {
+  ])('rejects feed query %s before upstream configuration or calls', async (query) => {
     const configure = vi.fn(() => ({ mode: 'live' as const, apiKey: key }))
     const fetcher = vi.fn<typeof fetch>()
     const response = await handleFeed(
@@ -127,40 +132,84 @@ describe('starter route boundary', () => {
     expect(fetcher).not.toHaveBeenCalled()
   })
 
+  it.each([
+    '',
+    'search=',
+    'search=%20%20',
+    `search=${'a'.repeat(101)}`,
+    'search=a&search=b',
+    'search=a&limit=50',
+  ])('rejects asset search %j before upstream configuration or calls', async (query) => {
+    const configure = vi.fn(() => ({ mode: 'live' as const, apiKey: key }))
+    const fetcher = vi.fn<typeof fetch>()
+    const response = await handleAssets(
+      new Request(`https://starter.example/api/assets?${query}`),
+      configure,
+      fetcher,
+    )
+    expect(response.status).toBe(400)
+    expect(configure).not.toHaveBeenCalled()
+    expect(fetcher).not.toHaveBeenCalled()
+  })
+
   it('serves deterministic samples without live calls even if a key exists', async () => {
     const fetcher = vi.fn<typeof fetch>()
-    const request = new Request('https://starter.example/api/feed?asset=btc')
+    const request = new Request('https://starter.example/api/feed?assetId=900001')
     const config = () => ({ mode: 'sample' as const, apiKey: key })
     const a = await handleFeed(request, config, fetcher)
     const b = await handleFeed(request, config, fetcher)
     const body = await a.json()
     expect(body).toEqual(await b.json())
     expect(body.mode).toBe('sample')
+    expect(body.data.results).toHaveLength(2)
     expect(
       body.data.results.every((item: { events: { assetId: number }[] }) =>
         item.events.every((event) => event.assetId === 900001),
       ),
     ).toBe(true)
     expect(a.headers.get('Cache-Control')).toBe('no-store')
+    const search = await handleAssets(
+      new Request('https://starter.example/api/assets?search=%20sol%20'),
+      config,
+      fetcher,
+    )
+    expect((await search.json()).data.results.map((asset: { id: number }) => asset.id)).toEqual([
+      900003,
+    ])
     expect(fetcher).not.toHaveBeenCalled()
   })
 
-  it('uses only configured live IDs and never visitor credentials', async () => {
-    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(success())
-    const request = new Request('https://starter.example/api/feed?asset=eth', {
-      headers: { 'x-api-key': 'visitor-key', Authorization: 'Bearer visitor' },
+  it('passes the chosen asset ID and search to the API with only the server key', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(async () => success())
+    const headers = { 'x-api-key': 'visitor-key', Authorization: 'Bearer visitor' }
+    const live = () => ({ mode: 'live' as const, apiKey: key })
+    const feed = await handleFeed(
+      new Request('https://starter.example/api/feed?assetId=10', { headers }),
+      live,
+      fetcher,
+    )
+    expect((await feed.json()).mode).toBe('live')
+    await handleAssets(
+      new Request('https://starter.example/api/assets?search=Bitcoin%20Cash', { headers }),
+      live,
+      fetcher,
+    )
+    const [feedUrl, searchUrl] = fetcher.mock.calls.map(([input]) => new URL(String(input)))
+    expect(Object.fromEntries(feedUrl.searchParams)).toEqual({ assetIds: '10', limit: '20' })
+    expect(searchUrl.pathname).toBe('/v2/assets')
+    expect(Object.fromEntries(searchUrl.searchParams)).toEqual({
+      search: 'Bitcoin Cash',
+      limit: '20',
     })
-    const response = await handleFeed(request, () => ({ mode: 'live', apiKey: key }), fetcher)
-    expect((await response.json()).mode).toBe('live')
-    expect(String(fetcher.mock.calls[0][0])).toContain('assetIds=10')
-    expect(fetcher.mock.calls[0][1]?.headers).toEqual({
-      'x-api-key': key,
-      accept: 'application/json',
-    })
+    for (const [, options] of fetcher.mock.calls)
+      expect(options?.headers).toEqual({ 'x-api-key': key, accept: 'application/json' })
   })
 
-  it('never substitutes samples for missing live credentials', async () => {
-    const response = await handleFeed(new Request('https://starter.example/api/feed'), () => ({
+  it.each([
+    [handleFeed, '/api/feed'],
+    [handleAssets, '/api/assets?search=btc'],
+  ])('never substitutes samples for missing live credentials', async (handle, path) => {
+    const response = await handle(new Request(`https://starter.example${path}`), () => ({
       mode: 'live',
     }))
     expect(response.status).toBe(500)

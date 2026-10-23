@@ -28,7 +28,7 @@ export default async function Page() {
         <aside aria-labelledby="about-title">
           <h2 id="about-title">Your UI, Centaur data</h2>
           <p>This example shows source posts, trading actions, and available media in one feed.</p>
-          <p>Choose an asset or click Refresh when you want another read.</p>
+          <p>Search for an asset, or click Refresh when you want another read.</p>
           <a href="https://docs.centaur.io/integrations/api-quickstart">Get started with the API</a>
         </aside>
       </div>

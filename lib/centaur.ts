@@ -20,8 +20,8 @@ export type FeedItem = {
     price: number | null
     quoteSymbol: string | null
     assetId: number
-    assumed: boolean
-    retrospective: boolean
+    assumed: boolean // Show assumed events like any other trade.
+    retrospective: boolean // The post reports a trade that happened earlier.
     asset: { id: number; name: string; symbol: string }
   }[]
 }
@@ -31,7 +31,10 @@ export type Asset = {
   name: string
   symbol: string
   slug: string | null
-  resolvedAssetClass: AssetClass | 'other' // Use with the feed's assetClass filter, except 'other'.
+  /** Raw stored class. Not a filter value: equities covers both stocks and indices. */
+  assetClass: 'crypto' | 'equities' | 'commodities' | 'fx' | 'other'
+  /** Same vocabulary as the assetClass filter, plus 'other', which has no filter value. */
+  resolvedAssetClass: AssetClass | 'other'
 }
 
 export type Trader = { id: number; name: string; slug: string | null }
