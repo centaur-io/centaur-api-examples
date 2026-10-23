@@ -1,12 +1,31 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import type { FeedData, FeedItem } from '../lib/centaur'
+import { useActionState, useEffect, useState } from 'react'
+import type { Asset, FeedData, FeedItem } from '../lib/centaur'
 import { safeUrl, type DataMode } from '../lib/presentation'
-import { selections } from '../lib/selections'
+import { sourceText } from '../lib/source-text'
 
 type Failure = { message: string; requestId?: string; retryAfter?: string }
 type State = { status: 'loading' | 'ready' | 'error'; data?: FeedData; error?: Failure }
+type Search = { query: string; results?: Asset[]; error?: Failure }
+
+function failure(body: { error?: Partial<Failure> } | null, fallback: string): Failure {
+  return {
+    message: typeof body?.error?.message === 'string' ? body.error.message : fallback,
+    requestId: body?.error?.requestId,
+    retryAfter: body?.error?.retryAfter,
+  }
+}
+
+function FailureDetails({ error }: { error: Failure }) {
+  return (
+    <>
+      <p>{error.message}</p>
+      {error.retryAfter && <p>Retry after: {error.retryAfter}</p>}
+      {error.requestId && <p>Request ID: {error.requestId}</p>}
+    </>
+  )
+}
 
 function Photo({ url, index, sample }: { url: string; index: number; sample: boolean }) {
   const [failed, setFailed] = useState(false)
@@ -44,7 +63,9 @@ function Card({ item, sample }: { item: FeedItem; sample: boolean }) {
           UTC
         </time>
       </header>
-      <p className="source-text">{item.source.text ?? 'Source text is unavailable.'}</p>
+      <p className="source-text">
+        {(item.source.text && sourceText(item.source.text)) || 'Source text is unavailable.'}
+      </p>
       <ul className="actions">
         {item.events.map((event) => (
           <li key={event.id}>
@@ -62,7 +83,6 @@ function Card({ item, sample }: { item: FeedItem; sample: boolean }) {
                 ? 'Price unavailable'
                 : `${new Intl.NumberFormat('en', { maximumFractionDigits: 8 }).format(event.price)}${event.quoteSymbol ? ` ${event.quoteSymbol}` : ''}`}
             </span>
-            {event.assumed && <span className="annotation">Inferred</span>}
             {event.retrospective && <span className="annotation">Retrospective</span>}
           </li>
         ))}
@@ -83,32 +103,94 @@ function Card({ item, sample }: { item: FeedItem; sample: boolean }) {
   )
 }
 
+async function searchAssets(_previous: Search, form: FormData): Promise<Search> {
+  const query = String(form.get('search') ?? '').trim()
+  try {
+    const response = await fetch(`/api/assets?search=${encodeURIComponent(query)}`, {
+      cache: 'no-store',
+    })
+    const body = await response.json()
+    if (!response.ok) return { query, error: failure(body, 'The starter could not search assets.') }
+    if (!Array.isArray(body.data?.results)) throw new Error('Invalid assets')
+    return { query, results: body.data.results as Asset[] }
+  } catch {
+    return { query, error: { message: 'The starter could not search assets. Try again.' } }
+  }
+}
+
+function AssetSearch({
+  selected,
+  onSelect,
+}: {
+  selected?: Asset
+  onSelect: (asset: Asset) => void
+}) {
+  const [search, action, pending] = useActionState(searchAssets, { query: '' })
+  return (
+    <>
+      <form action={action} role="search" className="toolbar">
+        <label htmlFor="asset-search">Asset</label>
+        <input
+          id="asset-search"
+          name="search"
+          type="search"
+          defaultValue={search.query}
+          placeholder="Search by name or symbol, such as bitcoin"
+          maxLength={100}
+          required
+          autoComplete="off"
+        />
+        <button disabled={pending}>Search</button>
+      </form>
+      {search.error && (
+        <div className="feed-state error" role="alert" aria-labelledby="search-error-title">
+          <h2 id="search-error-title">Search unavailable</h2>
+          <FailureDetails error={search.error} />
+        </div>
+      )}
+      {search.results?.length === 0 && (
+        <p className="search-state" role="status">
+          No assets match “{search.query}”.
+        </p>
+      )}
+      {!!search.results?.length && (
+        <ul className="asset-results" aria-label="Matching assets">
+          {search.results.map((asset) => (
+            <li key={asset.id}>
+              <button
+                type="button"
+                aria-pressed={selected?.id === asset.id}
+                onClick={() => onSelect(asset)}
+              >
+                {asset.name} ({asset.symbol})
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
+  )
+}
+
 export function Feed({ initialMode }: { initialMode: DataMode | 'unavailable' }) {
   const [mode, setMode] = useState(initialMode)
-  const [asset, setAsset] = useState('')
+  const [asset, setAsset] = useState<Asset>()
   const [revision, setRevision] = useState(0)
   const [state, setState] = useState<State>({ status: 'loading' })
   useEffect(() => {
     const controller = new AbortController()
     async function load() {
       try {
-        const response = await fetch(
-          `/api/feed${asset ? `?asset=${encodeURIComponent(asset)}` : ''}`,
-          { signal: controller.signal, cache: 'no-store' },
-        )
+        const response = await fetch(`/api/feed${asset ? `?assetId=${asset.id}` : ''}`, {
+          signal: controller.signal,
+          cache: 'no-store',
+        })
         const body = await response.json()
         if (controller.signal.aborted) return
         if (!response.ok) {
           setState({
             status: 'error',
-            error: {
-              message:
-                typeof body.error?.message === 'string'
-                  ? body.error.message
-                  : 'The starter could not load the feed.',
-              requestId: body.error?.requestId,
-              retryAfter: body.error?.retryAfter,
-            },
+            error: failure(body, 'The starter could not load the feed.'),
           })
           return
         }
@@ -128,6 +210,11 @@ export function Feed({ initialMode }: { initialMode: DataMode | 'unavailable' })
     return () => controller.abort()
   }, [asset, revision])
 
+  function select(next?: Asset) {
+    setState({ status: 'loading' })
+    setAsset(next)
+  }
+
   return (
     <>
       <div className={`mode mode-${mode}`}>
@@ -142,28 +229,22 @@ export function Feed({ initialMode }: { initialMode: DataMode | 'unavailable' })
           {mode === 'sample'
             ? 'Fictional posts and illustrations. No Centaur API requests.'
             : mode === 'live'
-              ? 'Refresh makes an API request. The API may return cached data.'
+              ? 'Search and Refresh make API requests. The API may return cached data.'
               : 'Check the server configuration.'}
         </span>
       </div>
-      <div className="toolbar">
-        <label htmlFor="asset">Asset</label>
-        <select
-          id="asset"
-          value={asset}
-          onChange={(event) => {
-            setState({ status: 'loading' })
-            setAsset(event.target.value)
-          }}
-        >
-          <option value="">All assets</option>
-          {selections.map((entry) => (
-            <option key={entry.key} value={entry.key}>
-              {entry.label}
-            </option>
-          ))}
-        </select>
+      <AssetSearch selected={asset} onSelect={select} />
+      <div className="selection">
+        <p>
+          Showing <strong>{asset ? `${asset.name} (${asset.symbol})` : 'all assets'}</strong>
+        </p>
+        {asset && (
+          <button type="button" className="secondary" onClick={() => select(undefined)}>
+            Show all assets
+          </button>
+        )}
         <button
+          type="button"
           disabled={state.status === 'loading'}
           onClick={() => {
             setState({ status: 'loading' })
@@ -179,12 +260,10 @@ export function Feed({ initialMode }: { initialMode: DataMode | 'unavailable' })
             Loading activity…
           </p>
         )}
-        {state.status === 'error' && (
+        {state.status === 'error' && state.error && (
           <div className="feed-state error" role="alert" aria-labelledby="feed-error-title">
             <h2 id="feed-error-title">Feed unavailable</h2>
-            <p>{state.error?.message}</p>
-            {state.error?.retryAfter && <p>Retry after: {state.error.retryAfter}</p>}
-            {state.error?.requestId && <p>Request ID: {state.error.requestId}</p>}
+            <FailureDetails error={state.error} />
           </div>
         )}
         {state.status === 'ready' && state.data?.results.length === 0 && (

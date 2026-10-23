@@ -1,5 +1,4 @@
 import { readConfig } from '../../../lib/server/config'
-import { handleFeed } from '../../../lib/server/feed-handler'
+import { handleFeed } from '../../../lib/server/handlers'
 
-export const runtime = 'nodejs'
 export const GET = (request: Request) => handleFeed(request, readConfig)
