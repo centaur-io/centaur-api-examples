@@ -40,11 +40,11 @@ Events with `assumed: true` display like any other trade. `retrospective: true` 
 
 Asset discovery returns two class fields, and the `assetClass` filter has its own values:
 
-| Name                       | Where              | Values                                             | Use it for                                                                                                         |
-| -------------------------- | ------------------ | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `assetClass` filter        | `/v2/assets`, feed | `crypto`, `stocks`, `indices`, `commodities`, `fx` | Narrowing a request. Omit it for every class.                                                                      |
-| `resolvedAssetClass` field | `/v2/assets`       | The filter values, plus `other`                    | Grouping or labelling assets in your UI, and building filter choices. Each value except `other` is a filter value. |
-| `assetClass` field         | `/v2/assets`       | `crypto`, `equities`, `commodities`, `fx`, `other` | The raw stored class. `equities` covers both stocks and indices, so it is not a filter value.                      |
+| Name                       | Where                              | Values                                             | Use it for                                                                                                         |
+| -------------------------- | ---------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `assetClass` filter        | `/v2/assets`, feed (release-gated) | `crypto`, `stocks`, `indices`, `commodities`, `fx` | Narrowing a request. Omit it for every class.                                                                      |
+| `resolvedAssetClass` field | `/v2/assets`                       | The filter values, plus `other`                    | Grouping or labelling assets in your UI, and building filter choices. Each value except `other` is a filter value. |
+| `assetClass` field         | `/v2/assets`                       | `crypto`, `equities`, `commodities`, `fx`, `other` | The raw stored class. `equities` covers both stocks and indices, so it is not a filter value.                      |
 
 For example, an S&P 500 index returns `assetClass: "equities"` and `resolvedAssetClass: "indices"`, and you filter it with `assetClass=indices`. Apple returns `resolvedAssetClass: "stocks"`, filtered with `assetClass=stocks`. See [asset discovery](https://docs.centaur.io/guides/rest/data-reads#assets).
 

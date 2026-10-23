@@ -18,11 +18,11 @@ export function statusMessage(status: number) {
     case 422:
       return 'Centaur rejected the selection. Check the requested identifiers.'
     case 429:
-      return 'The API allowance is exhausted. Wait before trying Refresh again.'
+      return 'The API allowance is exhausted. Wait before trying again.'
     case 503:
-      return 'Centaur is temporarily unavailable. Try Refresh later.'
+      return 'Centaur is temporarily unavailable. Try again later.'
     default:
-      return 'Centaur could not complete this request. Try Refresh later.'
+      return 'Centaur could not complete this request. Try again later.'
   }
 }
 

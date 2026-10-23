@@ -60,8 +60,10 @@ test('asset search keeps the API order and filters the feed by the chosen ID', a
     { id: 9, name: 'Wrapped Bitcoin', symbol: 'WBTC', slug: 'crypto-wbtc' },
   ].map((asset) => ({ ...asset, assetClass: 'crypto', resolvedAssetClass: 'crypto' }))
   const feeds: string[] = []
+  const searches: string[] = []
   await page.route('**/api/assets?*', async (route) => {
     const search = new URL(route.request().url()).searchParams.get('search')
+    searches.push(search ?? '')
     if (search === 'unavailable')
       await route.fulfill({
         status: 429,
@@ -84,12 +86,22 @@ test('asset search keeps the API order and filters the feed by the chosen ID', a
     'Wrapped Bitcoin (WBTC)',
   ])
   await expect(page.getByRole('searchbox', { name: 'Asset', exact: true })).toHaveValue('bitcoin')
+  await expect(
+    page.getByText('3 assets match “bitcoin”. Choose one to filter the feed.', { exact: true }),
+  ).toBeVisible()
   await page.getByRole('button', { name: 'Bitcoin (BTC)', exact: true }).click()
   await expect(page.getByText('Showing Bitcoin (BTC)', { exact: true })).toBeVisible()
   await expect(page.getByText('No activity for this selection.', { exact: false })).toBeVisible()
-  expect(feeds).toEqual(['', '?assetId=1'])
+  // Choosing the selected asset again reloads it instead of leaving the feed loading.
+  await page.getByRole('button', { name: 'Bitcoin (BTC)', exact: true }).click()
+  await expect(page.getByText('No activity for this selection.', { exact: false })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeEnabled()
+  expect(feeds).toEqual(['', '?assetId=1', '?assetId=1'])
   await searchAssets(page, 'nothing')
   await expect(page.getByText('No assets match “nothing”.', { exact: true })).toBeVisible()
+  // The browser blocks a blank search before any request.
+  await searchAssets(page, '   ')
+  expect(searches).toEqual(['bitcoin', 'nothing'])
   await searchAssets(page, 'unavailable')
   await expect(page.getByRole('alert', { name: 'Search unavailable', exact: true })).toContainText(
     'Retry after: 30',

@@ -24,7 +24,7 @@ function readParam(request: Request, name: string) {
   return params.get(name)
 }
 
-function readConfig(configure: Configure, fetcher?: typeof fetch) {
+function clientFor(configure: Configure, fetcher?: typeof fetch) {
   const { mode, apiKey } = configure()
   if (mode === 'sample') return { mode, client: undefined }
   if (!apiKey)
@@ -47,7 +47,7 @@ export function handleFeed(request: Request, configure: Configure, fetcher?: typ
         'Choose an asset from search or the general feed.',
       )
     const assetId = value === null ? undefined : Number(value)
-    const { mode, client } = readConfig(configure, fetcher)
+    const { mode, client } = clientFor(configure, fetcher)
     const data = client
       ? await client.feed({ assetIds: assetId ? [assetId] : undefined, limit: 20 }, request.signal)
       : sampleFeed(assetId)
@@ -61,7 +61,7 @@ export function handleAssets(request: Request, configure: Configure, fetcher?: t
     const search = readParam(request, 'search')?.trim() ?? ''
     if (!search || search.length > 100)
       throw new CentaurError(400, 'INVALID_SEARCH', 'Search with 1 to 100 characters.')
-    const { mode, client } = readConfig(configure, fetcher)
+    const { mode, client } = clientFor(configure, fetcher)
     const data = client
       ? await client.findAssets(search, request.signal)
       : sampleAssetSearch(search)
